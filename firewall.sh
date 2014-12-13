@@ -54,7 +54,7 @@ echo "-> allow loopback"
 $IPT -A INPUT -i lo -j ACCEPT
 $IPT -A OUTPUT -o lo -j ACCEPT
 
-### -> allow LAN connection
+### Allow LAN connection
 if [ "$LAN_ALLOW" = "1" ]; then
 	echo "-> allow all LAN connection"
 	for eth in $INT_IF; do
