@@ -50,7 +50,7 @@ $IPT -t mangle -X
 
 ### Allow allow loopback
 echo "-> allow loopback"
-$IPT -A INPUT -i lo -j ACCEPT
+$IPT -A INPUT  -i lo -j ACCEPT
 $IPT -A OUTPUT -o lo -j ACCEPT
 
 ### Allow LAN connection
@@ -64,13 +64,13 @@ fi
 
 ### Allow current established and related connections
 echo "-> allow current established connections"
-$IPT -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
-$IPT -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+$IPT -A INPUT 	-m state --state RELATED,ESTABLISHED -j ACCEPT 
+$IPT -A OUTPUT 	-m state --state RELATED,ESTABLISHED -j ACCEPT 
 
 ### Allow incoming SSH
 echo "-> allow incoming SSH"
-$IPT -A INPUT -i $EXT_IF -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
-$IPT -A OUTPUT -o $EXT_IF -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+$IPT -A INPUT 	-i $EXT_IF -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT 	-o $EXT_IF -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
 ### Allow good ip from whitelist file
 if [ "$WHITELIST_ALLOW" = "1" ]; then
@@ -103,23 +103,23 @@ fi
 
 ### Allow incoming TCP
 echo "-> allow incoming $incoming_tcp"
-$IPT -A INPUT -i $EXT_IF -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-$IPT -A OUTPUT -o $EXT_IF -p tcp -m multiport --sports $incoming_tcp -m state --state ESTABLISHED -j ACCEPT
+$IPT -A INPUT 	-i $EXT_IF -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT 	-o $EXT_IF -p tcp -m multiport --sports $incoming_tcp -m state --state ESTABLISHED -j ACCEPT
 
 ### Allow incoming UDP
 echo "-> allow incoming $incoming_udp"
-$IPT -A INPUT -i $EXT_IF -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
-$IPT -A OUTPUT -o $EXT_IF -p udp -m multiport --sports $incoming_udp -m state --state ESTABLISHED -j ACCEPT
+$IPT -A INPUT 	-i $EXT_IF -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT 	-o $EXT_IF -p udp -m multiport --sports $incoming_udp -m state --state ESTABLISHED -j ACCEPT
 
 ### Allow outgoing TCP
 echo "-> allow outgoing $outgoing_tcp"
-$IPT -A OUTPUT -o $EXT_IF -p tcp -m multiport --dports $outgoing_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-$IPT -A INPUT -i $EXT_IF -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT 	-o $EXT_IF -p tcp -m multiport --dports $outgoing_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A INPUT 	-i $EXT_IF -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
 
 ### Allow outgoing UDP
 echo "-> allow outgoing $outgoing_udp"
-$IPT -A OUTPUT -o $EXT_IF -p udp -m multiport --dports $outgoing_udp -m state --state NEW,ESTABLISHED -j ACCEPT
-$IPT -A INPUT -i $EXT_IF -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT 	-o $EXT_IF -p udp -m multiport --dports $outgoing_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A INPUT 	-i $EXT_IF -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
 
 ### Make sure to drop bad packages
 echo "-> drop bad packages"
@@ -130,15 +130,16 @@ $IPT -A INPUT -p tcp ! --syn -m state --state NEW -j DROP # Drop all new connect
 
 ### ICMP (PING) - Ping flood projection 1 per second
 echo "-> allow ping"
-$IPT -A INPUT -p icmp -m limit --limit 5/s --limit-burst 5 -j ACCEPT
-$IPT -A OUTPUT -p icmp -m limit --limit 5/s --limit-burst 5 -j ACCEPT
+$IPT -A INPUT -p icmp -m limit --limit 5/s -j ACCEPT
+$IPT -A INPUT -p icmp -j DROP
 
-### Log and drop syn flooding
-echo "-> log and drop syn flooding"
-$IPT -N synflood
-$IPT -A synflood -m limit --limit 100/second --limit-burst 150 -j RETURN
-$IPT -A synflood -j LOG --log-prefix "SYN flood:"
-$IPT -A synflood -j DROP
+### Log all the rest before dropping
+$IPT -A INPUT   -j LOG --log-prefix "IN: "
+$IPT -A INPUT   -j DROP
+$IPT -A OUTPUT  -j LOG --log-prefix "OU: "
+$IPT -A OUTPUT  -j DROP
+$IPT -A FORWARD -j LOG --log-prefix "FW: "
+$IPT -A FORWARD -j DROP
 
 ### End
 echo "DONE."
