@@ -17,10 +17,10 @@ whitelist_allow="1" # enable allow ips from whitelist
 
 # WARNING: edit carefully
 # list incoming and outgoing TCP & UDP ports (ssh incoming is mandatory, not list here)
-incoming_tcp="80,443" 		# allow incoming http, https request
-incoming_udp="53"			# allow incoming dns request
-outgoing_tcp="22,53,80"		# allow outgoing ssh, dns, http request
-outgoing_udp="53,123"		# allow outgoing dns, ntp request
+incoming_tcp="80,443"            # allow incoming http, https request
+incoming_udp="53"                # allow incoming dns request
+outgoing_tcp="22,53,80"          # allow outgoing ssh, dns, http request
+outgoing_udp="53,123"            # allow outgoing dns, ntp request
 
 # file
 black_list="blacklist.txt"
