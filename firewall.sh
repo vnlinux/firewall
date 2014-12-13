@@ -1,21 +1,20 @@
 #!/bin/bash
 
+### Declare some system variables
+IPT=$(which iptables)
+EXT_IF=$(/sbin/ip route | grep default | awk '{print $5}') # external network interface
+INT_IF=$(ip link show | grep "state UP" | grep -v $EXT_IF | awk '{print $2}' | cut -d':' -f1) # all internal network interfaces
+
 ### Declare some options to choose
 LAN_ALLOW="1" # this will set allow all connection from LAN
 BLACKLIST_BLOCK="1" # enable block ips from blacklist
 WHITELIST_ALLOW="1" # enable allow ips from whitelist
 
-### Declare some system variables
-IPT=$(which iptables)
-
-EXT_IF=$(/sbin/ip route | grep default | awk '{print $5}')
-INT_IF=$(ip link show | grep "state UP" | grep -v $EXT_IF | awk '{print $2}' | cut -d':' -f1)
-
 ### List incoming and outgoing TCP & UDP ports (22 is mandatory, not list here)
-IN_TCP="80 443"
-IN_UDP=""
-OUT_TCP="22 53"
-OUT_UDP="53 123"
+incoming_tcp="80,443"
+incoming_udp="53"
+outgoing_tcp="22,53"
+outgoing_udp="53,123"
 
 ### File
 black_list="blacklist.txt"
@@ -33,7 +32,7 @@ if [ $WHITELIST_ALLOW = "1" ] && [ ! -f "$white_list" ]; then
 fi
 
 ### STARTING FIREWALL
-echo "STARTING FIREWALL :"
+echo "STARTING FIREWALL:"
 
 ### Set default chain policies
 $IPT -P INPUT DROP
@@ -102,33 +101,27 @@ if [ "$BLACKLIST_BLOCK" = "1" ]; then
 	$IPT -I FORWARD -j droplist
 fi
 
-### Allow incoming TCP & UDP
-echo "-> allow incoming $IN_TCP"
-for port in $IN_TCP; do
-	$IPT -A INPUT -i $EXT_IF -p tcp --dport $port -m state --state NEW,ESTABLISHED -j ACCEPT
-	$IPT -A OUTPUT -o $EXT_IF -p tcp --sport $port -m state --state ESTABLISHED -j ACCEPT
-done
+### Allow incoming TCP
+echo "-> allow incoming $incoming_tcp"
+$IPT -A INPUT -i $EXT_IF -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT -o $EXT_IF -p tcp -m multiport --sports $incoming_tcp -m state --state ESTABLISHED -j ACCEPT
 
-echo "-> allow incoming $IN_UDP"
-for port in $IN_UDP; do
-	$IPT -A INPUT -i $EXT_IF -p udp --dport $port -m state --state NEW,ESTABLISHED -j ACCEPT
-	$IPT -A OUTPUT -o $EXT_IF -p udp --sport $port -m state --state ESTABLISHED -j ACCEPT
-done
+### Allow incoming UDP
+echo "-> allow incoming $incoming_udp"
+$IPT -A INPUT -i $EXT_IF -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A OUTPUT -o $EXT_IF -p udp -m multiport --sports $incoming_udp -m state --state ESTABLISHED -j ACCEPT
 
-### Allow outgoing TCP & UDP
-echo "-> allow outgoing $OUT_TCP"
-for port in $OUT_TCP; do
-	$IPT -A OUTPUT -o $EXT_IF -p tcp --dport $port -m state --state NEW,ESTABLISHED -j ACCEPT
-	$IPT -A INPUT -i $EXT_IF -p tcp --sport $port -m state --state ESTABLISHED -j ACCEPT
-done
+### Allow outgoing TCP
+echo "-> allow outgoing $outgoing_tcp"
+$IPT -A OUTPUT -o $EXT_IF -p tcp -m multiport --dports $outgoing_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A INPUT -i $EXT_IF -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
 
-echo "-> allow outgoing $OUT_UDP"
-for port in $OUT_UDP; do
-	$IPT -A OUTPUT -o $EXT_IF -p udp --dport $port -m state --state NEW,ESTABLISHED -j ACCEPT
-	$IPT -A INPUT -i $EXT_IF -p udp --sport $port -m state --state ESTABLISHED -j ACCEPT
-done
+### Allow outgoing UDP
+echo "-> allow outgoing $outgoing_udp"
+$IPT -A OUTPUT -o $EXT_IF -p udp -m multiport --dports $outgoing_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+$IPT -A INPUT -i $EXT_IF -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
 
-### Drop bad packages
+### Make sure to drop bad packages
 echo "-> drop bad packages"
 $IPT -A INPUT -f -j DROP # Drop packages with incoming fragments
 $IPT -A INPUT -p tcp --tcp-flags ALL ALL -j DROP # Drop incoming malformed XMAS packets
@@ -139,15 +132,13 @@ $IPT -A INPUT -p tcp ! --syn -m state --state NEW -j DROP # Drop all new connect
 echo "-> allow ping"
 $IPT -A INPUT -p icmp -m limit --limit 5/s --limit-burst 5 -j ACCEPT
 $IPT -A OUTPUT -p icmp -m limit --limit 5/s --limit-burst 5 -j ACCEPT
-$IPT -A INPUT -p icmp -j DROP
-$IPT -A OUTPUT -p icmp -j DROP
 
 ### Log and drop syn flooding
 echo "-> log and drop syn flooding"
-$IPT -N syn-flood
-$IPT -A syn-flood -m limit --limit 100/second --limit-burst 150 -j RETURN
-$IPT -A syn-flood -j LOG --log-prefix "SYN flood:"
-$IPT -A syn-flood -j DROP
+$IPT -N synflood
+$IPT -A synflood -m limit --limit 100/second --limit-burst 150 -j RETURN
+$IPT -A synflood -j LOG --log-prefix "SYN flood:"
+$IPT -A synflood -j DROP
 
 ### End
 echo "DONE."
