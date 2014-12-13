@@ -74,7 +74,7 @@ if [ "$LAN_ALLOW" = "1" ]; then
 fi
 
 # allow incoming SSH
-$iptables -A INPUT 	-i $ext_if -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+$iptables -A INPUT -i $ext_if -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
 $iptables -A OUTPUT -o $ext_if -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
 # allow good ip from whitelist file
@@ -105,20 +105,20 @@ if [ "$BLACKLIST_BLOCK" = "1" ]; then
 fi
 
 # allow incoming TCP
-$iptables -A INPUT 	-i $ext_if -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+$iptables -A INPUT -i $ext_if -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
 $iptables -A OUTPUT -o $ext_if -p tcp -m multiport --sports $incoming_tcp -m state --state ESTABLISHED -j ACCEPT
 
 # allow incoming UDP
-$iptables -A INPUT 	-i $ext_if -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+$iptables -A INPUT -i $ext_if -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
 $iptables -A OUTPUT -o $ext_if -p udp -m multiport --sports $incoming_udp -m state --state ESTABLISHED -j ACCEPT
 
 # allow outgoing TCP
 $iptables -A OUTPUT -o $ext_if -p tcp -m multiport --dports $outgoing_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-$iptables -A INPUT 	-i $ext_if -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
+$iptables -A INPUT -i $ext_if -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
 
 # allow outgoing UDP
 $iptables -A OUTPUT -o $ext_if -p udp -m multiport --dports $outgoing_udp -m state --state NEW,ESTABLISHED -j ACCEPT
-$iptables -A INPUT 	-i $ext_if -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
+$iptables -A INPUT -i $ext_if -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
 
 # make sure to drop bad packages
 $iptables -A INPUT -f -j DROP # Drop packages with incoming fragments
@@ -127,9 +127,9 @@ $iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP # Drop all NULL packets
 $iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP # Drop all new connection are not SYN packets
 
 # ping flood projection 5 per second
-$iptables -A INPUT 	-p icmp -m limit --limit 5/s -j ACCEPT
-$iptables -A OUTPUT -p icmp -m limit --limit 5/s -j ACCEPT
-$iptables -A INPUT 	-p icmp -j DROP
+$iptables -A INPUT	-p icmp -m limit --limit 5/s -j ACCEPT
+$iptables -A OUTPUT	-p icmp -m limit --limit 5/s -j ACCEPT
+$iptables -A INPUT	-p icmp -j DROP
 $iptables -A OUTPUT	-p icmp -j DROP
 
 # log all the rest before dropping
