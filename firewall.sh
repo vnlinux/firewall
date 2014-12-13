@@ -1,4 +1,6 @@
 #!/bin/bash
+# written by vnlinux team
+# https://github.com/vnlinux
 
 # declare some system variables
 iptables="/sbin/iptables"
@@ -9,27 +11,28 @@ network_addr=$(/sbin/ip route | grep default | awk '{print $3}' | cut -d"." -f1-
 broadcast_addr="$network_addr.255"
 
 # declare some options to choose
-LAN_ALLOW="1" # this will set allow all connection from LAN
-BLACKLIST_BLOCK="1" # enable block ips from blacklist
-WHITELIST_ALLOW="1" # enable allow ips from whitelist
+lan_allow="1" # this will set allow all connection from LAN
+blacklist_block="1" # enable block ips from blacklist
+whitelist_allow="1" # enable allow ips from whitelist
 
-# list incoming and outgoing TCP & UDP ports (22 is mandatory, not list here)
-incoming_tcp="80,443"
-incoming_udp="53"
-outgoing_tcp="22,53,80"
-outgoing_udp="53,123"
+# WARNING: edit carefully
+# list incoming and outgoing TCP & UDP ports (ssh incoming is mandatory, not list here)
+incoming_tcp="80,443" 		# allow incoming http, https request
+incoming_udp="53"			# allow incoming dns request
+outgoing_tcp="22,53,80"		# allow outgoing ssh, dns, http request
+outgoing_udp="53,123"		# allow outgoing dns, ntp request
 
 # file
 black_list="blacklist.txt"
 white_list="whitelist.txt"
 
 # check if file is found
-if [ $BLACKLIST_BLOCK = "1" ] && [ ! -f $black_list ]; then
+if [ $blacklist_block = "1" ] && [ ! -f $black_list ]; then
 	echo "File $black_list not found."
 	exit 1
 fi
 
-if [ $WHITELIST_ALLOW = "1" ] && [ ! -f "$white_list" ]; then
+if [ $whitelist_allow = "1" ] && [ ! -f "$white_list" ]; then
 	echo "File $white_list not found."
 	exit 1
 fi
@@ -66,7 +69,7 @@ $iptables -A INPUT  -i lo -j ACCEPT
 $iptables -A OUTPUT -o lo -j ACCEPT
 
 # allow LAN connection
-if [ "$LAN_ALLOW" = "1" ]; then
+if [ "$lan_allow" = "1" ]; then
 	for eth in $int_if; do
 		$iptables -A INPUT -i $eth -j ACCEPT
 		$iptables -A OUTPUT -o $eth -j ACCEPT
@@ -78,7 +81,7 @@ $iptables -A INPUT -i $ext_if -p tcp --dport 22 -m state --state NEW,ESTABLISHED
 $iptables -A OUTPUT -o $ext_if -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
 # allow good ip from whitelist file
-if [ "$WHITELIST_ALLOW" = "1" ]; then
+if [ "$whitelist_allow" = "1" ]; then
 	$iptables -N acceptlist
 	good_ips=$(egrep -v -E "^#|^$" $white_list)
 	for ip in $good_ips; do
@@ -91,7 +94,7 @@ if [ "$WHITELIST_ALLOW" = "1" ]; then
 fi
 
 # block bad ip from blacklist file
-if [ "$BLACKLIST_BLOCK" = "1" ]; then
+if [ "$blacklist_block" = "1" ]; then
 	$iptables -N droplist
 	bad_ips=$(egrep -v -E "^#|^$" $black_list)
 	for ip in $bad_ips; do
