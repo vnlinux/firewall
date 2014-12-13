@@ -39,11 +39,10 @@ echo -n "Starting firewall: "
 
 # tuning network protection
 echo 1 > /proc/sys/net/ipv4/tcp_syncookies                          # enable TCP SYN cookie protection
-echo 0 > /proc/sys/net/ipv4/conf/all/log_martians                   # log packets with impossible addresses to kernel log
 echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route            # disable IP Source routing
 echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects               # disable ICMP Redirect acceptance
 echo 1 > /proc/sys/net/ipv4/conf/all/rp_filter                      # enable IP spoofing protection
-echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts             # ignore echo broadcast requests to prevent being part of smurf attacks
+echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts             # ignore echo broadcast requests to prevent smurf attacks
 
 # delete all existing rules
 $iptables -F
