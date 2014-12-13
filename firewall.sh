@@ -2,8 +2,8 @@
 
 # declare some system variables
 iptables="/sbin/iptables"
-ext_if=$(/sbin/ip route | grep default | awk '{print $5}') # external network interface
-int_if=$(/sbin/ip link show | grep "state UP" | grep -v $ext_if | awk '{print $2}' | cut -d':' -f1) # all internal network interfaces
+ext_if=$(/sbin/ip route | grep default | awk '{print $5}') # external interface
+int_if=$(/sbin/ip link show | grep "state UP" | grep -v $ext_if | awk '{print $2}' | cut -d':' -f1) # internal interfaces
 
 network_addr=$(/sbin/ip route | grep default | awk '{print $3}' | cut -d"." -f1-3)
 broadcast_addr="$network_addr.255"
@@ -127,10 +127,10 @@ $iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP # Drop all NULL packets
 $iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP # Drop all new connection are not SYN packets
 
 # ping flood projection 5 per second
-$iptables -A INPUT	-p icmp -m limit --limit 5/s -j ACCEPT
-$iptables -A OUTPUT	-p icmp -m limit --limit 5/s -j ACCEPT
-$iptables -A INPUT	-p icmp -j DROP
-$iptables -A OUTPUT	-p icmp -j DROP
+$iptables -A INPUT -p icmp -m limit --limit 5/s -j ACCEPT
+$iptables -A OUTPUT -p icmp -m limit --limit 5/s -j ACCEPT
+$iptables -A INPUT -p icmp -j DROP
+$iptables -A OUTPUT -p icmp -j DROP
 
 # log all the rest before dropping
 $iptables -A INPUT   -j LOG --log-prefix "IN: "
