@@ -49,7 +49,7 @@ $IPT -t nat -X
 $IPT -t mangle -F
 $IPT -t mangle -X
 
-### -> allow loopback
+### Allow allow loopback
 echo "-> allow loopback"
 $IPT -A INPUT -i lo -j ACCEPT
 $IPT -A OUTPUT -o lo -j ACCEPT
@@ -63,17 +63,17 @@ if [ "$LAN_ALLOW" = "1" ]; then
 	done
 fi
 
-### -> allow current established and related connections
+### Allow current established and related connections
 echo "-> allow current established connections"
 $IPT -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
 $IPT -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
 
-### -> allow incoming SSH
+### Allow incoming SSH
 echo "-> allow incoming SSH"
 $IPT -A INPUT -i $EXT_IF -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
 $IPT -A OUTPUT -o $EXT_IF -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
-### -> allow good ip from whitelist file
+### Allow good ip from whitelist file
 if [ "$WHITELIST_ALLOW" = "1" ]; then
 	echo "-> allow good ips from whitelist"
 	$IPT -N acceptlist
@@ -102,7 +102,7 @@ if [ "$BLACKLIST_BLOCK" = "1" ]; then
 	$IPT -I FORWARD -j droplist
 fi
 
-### -> allow incoming TCP & UDP
+### Allow incoming TCP & UDP
 echo "-> allow incoming $IN_TCP"
 for port in $IN_TCP; do
 	$IPT -A INPUT -i $EXT_IF -p tcp --dport $port -m state --state NEW,ESTABLISHED -j ACCEPT
@@ -115,7 +115,7 @@ for port in $IN_UDP; do
 	$IPT -A OUTPUT -o $EXT_IF -p udp --sport $port -m state --state ESTABLISHED -j ACCEPT
 done
 
-### -> allow outgoing TCP & UDP
+### Allow outgoing TCP & UDP
 echo "-> allow outgoing $OUT_TCP"
 for port in $OUT_TCP; do
 	$IPT -A OUTPUT -o $EXT_IF -p tcp --dport $port -m state --state NEW,ESTABLISHED -j ACCEPT
