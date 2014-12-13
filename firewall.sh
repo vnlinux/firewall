@@ -2,6 +2,7 @@
 # written by vnlinux team
 # https://github.com/vnlinux
 
+
 # declare some system variables
 iptables="/sbin/iptables"
 ext_if=$(/sbin/ip route | grep default | awk '{print $5}') # external interface
@@ -26,6 +27,21 @@ outgoing_udp="53,123"            # allow outgoing dns, ntp request
 black_list="blacklist.txt"
 white_list="whitelist.txt"
 
+### MAIN ###
+case "$1" in
+    start)
+		echo -n "Starting firewall: "
+		stop_firewall="0"
+        ;;
+    stop)
+		echo -n "Stopping firewall: "
+		stop_firewall="1"
+        ;;
+    *) 
+        echo $"Usage: filewall.sh {start|stop}"
+        exit 2
+esac
+
 # check if file is found
 if [ $blacklist_block = "1" ] && [ ! -f $black_list ]; then
 	echo "File $black_list not found."
@@ -36,9 +52,6 @@ if [ $whitelist_allow = "1" ] && [ ! -f "$white_list" ]; then
 	echo "File $white_list not found."
 	exit 1
 fi
-
-### STARTING FIREWALL
-echo -n "Starting firewall: "
 
 # tuning network protection
 echo 1 > /proc/sys/net/ipv4/tcp_syncookies                          # enable TCP SYN cookie protection
@@ -56,9 +69,17 @@ $iptables -t mangle -F
 $iptables -t mangle -X
 
 # default policy
-$iptables -P INPUT   DROP
-$iptables -P FORWARD DROP
-$iptables -P OUTPUT  DROP
+if [ "$stop_firewall" = "0" ]; then
+	$iptables -P INPUT   DROP
+	$iptables -P FORWARD DROP
+	$iptables -P OUTPUT  DROP
+elif [ "$stop_firewall" = "1" ]; then
+	$iptables -P INPUT   ACCEPT
+	$iptables -P FORWARD ACCEPT
+	$iptables -P OUTPUT  ACCEPT
+	echo "OK."
+	exit 0
+fi
 
 # drop broadcast (do not log)
 $iptables -A INPUT -i $ext_if -d 255.255.255.255 -j DROP
