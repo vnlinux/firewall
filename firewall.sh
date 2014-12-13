@@ -2,7 +2,6 @@
 # written by vnlinux team
 # https://github.com/vnlinux
 
-
 # declare some system variables
 iptables="/sbin/iptables"
 ext_if=$(/sbin/ip route | grep default | awk '{print $5}') # external interface
