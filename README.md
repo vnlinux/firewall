@@ -11,4 +11,4 @@ FILES:
 RUN:
 - sudo sh firewall.sh start: start firewall
 - sudo sh firewall.sh stop: stop firewall
-- sudo sh firewall.sh start ; (sleep 30; sudo sh firewall.sh stop) & : start it and stop in after 5 minutes
+- sudo sh firewall.sh start; (sleep 300; sudo sh firewall.sh stop) & : start and stop in after 5 minutes (testing mode)
