@@ -17,10 +17,12 @@ whitelist_allow="1" # enable allow ips from whitelist
 
 # WARNING: edit carefully
 # list incoming and outgoing TCP & UDP ports (ssh incoming is mandatory, not list here)
+# ------------------------------------------------------------------------------------
 incoming_tcp="80,443"            # allow incoming http, https request
 incoming_udp="53"                # allow incoming dns request
 outgoing_tcp="22,53,80"          # allow outgoing ssh, dns, http request
 outgoing_udp="53,123"            # allow outgoing dns, ntp request
+# ------------------------------------------------------------------------------------
 
 # file
 black_list="blacklist.txt"
@@ -29,11 +31,11 @@ white_list="whitelist.txt"
 ### MAIN ###
 case "$1" in
     start)
-		echo -n "Starting firewall: "
+		echo "Starting firewall: "
 		stop_firewall="0"
         ;;
     stop)
-		echo -n "Stopping firewall: "
+		echo "Stopping firewall: "
 		stop_firewall="1"
         ;;
     *) 
@@ -52,6 +54,7 @@ if [ $whitelist_allow = "1" ] && [ ! -f "$white_list" ]; then
 	exit 1
 fi
 
+### Start
 # tuning network protection
 echo 1 > /proc/sys/net/ipv4/tcp_syncookies                          # enable TCP SYN cookie protection
 echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route            # disable IP Source routing

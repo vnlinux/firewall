@@ -10,6 +10,12 @@ Tool for setting up your firewall based on iptables
 
 ##Usage
 
+Clone to your server
+```sh
+git clone https://github.com/vnlinux/firewall.git
+```
+Edit tcp_incoming, udp_incoming, tcp_outgoing, udp_outgoing in firewall.sh
+
 Start firewall
 ```sh
 sudo sh firewall.sh start
