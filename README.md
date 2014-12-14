@@ -14,7 +14,8 @@ Clone to your server
 ```sh
 git clone https://github.com/vnlinux/firewall.git
 ```
-Edit tcp_incoming, udp_incoming, tcp_outgoing, udp_outgoing in firewall.sh
+- Edit tcp_incoming, udp_incoming, tcp_outgoing, udp_outgoing in firewall.sh
+- Add ip address to blacklist.txt, whitelist.txt if you have
 
 Start firewall
 ```sh
