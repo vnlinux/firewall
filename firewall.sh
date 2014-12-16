@@ -14,6 +14,7 @@ broadcast_addr="$network_addr.255"
 lan_allow="1" # this will set allow all connection from LAN
 blacklist_block="1" # enable block ips from blacklist
 whitelist_allow="1" # enable allow ips from whitelist
+gateway="1" # make this server as gateway
 
 # WARNING: edit carefully
 # list incoming and outgoing TCP & UDP ports (ssh incoming is mandatory, not list here)
@@ -31,11 +32,11 @@ white_list="whitelist.txt"
 ### MAIN ###
 case "$1" in
     start)
-		echo "Starting firewall: "
+		echo -n "Starting firewall: "
 		stop_firewall="0"
         ;;
     stop)
-		echo "Stopping firewall: "
+		echo -n "Stopping firewall: "
 		stop_firewall="1"
         ;;
     *) 
@@ -61,6 +62,7 @@ echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route            # disable IP
 echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects               # disable ICMP Redirect acceptance
 echo 1 > /proc/sys/net/ipv4/conf/all/rp_filter                      # enable IP spoofing protection
 echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts             # ignore echo broadcast requests to prevent smurf attacks
+echo 1 > /proc/sys/net/ipv4/ip_forward                              # enable ip forwarding
 
 # delete all existing rules
 $iptables -F
@@ -103,6 +105,14 @@ fi
 $iptables -A INPUT -i $ext_if -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
 $iptables -A OUTPUT -o $ext_if -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
+# masquerading
+if [ "$gateway" = "1" ]; then
+	$iptables -t nat -A POSTROUTING -o $ext_if -j MASQUERADE 
+	for eth in $int_if; do
+		$iptables -A FORWARD -i $ext_if -o $eth -m state --state RELATED,ESTABLISHED -j ACCEPT
+		$iptables -A FORWARD -i $eth -o $ext_if -j ACCEPT
+	done
+fi
 # allow good ip from whitelist file
 if [ "$whitelist_allow" = "1" ]; then
 	$iptables -N acceptlist
