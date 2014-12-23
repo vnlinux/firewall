@@ -23,10 +23,10 @@ fi
 # WARNING: edit carefully
 # list incoming and outgoing TCP & UDP ports (ssh incoming is mandatory, not list here)
 # ------------------------------------------------------------------------------------
-incoming_tcp="80,443"            # allow incoming http, https request
-incoming_udp="53"                # allow incoming dns request
-outgoing_tcp="22,53,80"          # allow outgoing ssh, dns, http request
-outgoing_udp="53,123"            # allow outgoing dns, ntp request
+incoming_tcp="80,443"            # allow incoming tcp request
+incoming_udp=""                  # allow incoming udp request
+outgoing_tcp="22,53,80,443"      # allow outgoing tcp request
+outgoing_udp="53,123"            # allow outgoing udp request
 # ------------------------------------------------------------------------------------
 
 # file
@@ -146,20 +146,28 @@ if [ "$blacklist_block" = "1" ]; then
 fi
 
 # allow incoming TCP
-$iptables -A INPUT -i $ext_if -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-$iptables -A OUTPUT -o $ext_if -p tcp -m multiport --sports $incoming_tcp -m state --state ESTABLISHED -j ACCEPT
+if [ ! -z "$incoming_tcp" ]; then
+	$iptables -A INPUT -i $ext_if -p tcp -m multiport --dports $incoming_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+	$iptables -A OUTPUT -o $ext_if -p tcp -m multiport --sports $incoming_tcp -m state --state ESTABLISHED -j ACCEPT
+fi
 
 # allow incoming UDP
-$iptables -A INPUT -i $ext_if -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
-$iptables -A OUTPUT -o $ext_if -p udp -m multiport --sports $incoming_udp -m state --state ESTABLISHED -j ACCEPT
+if [ ! -z "$incoming_udp" ]; then
+	$iptables -A INPUT -i $ext_if -p udp -m multiport --dports $incoming_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+	$iptables -A OUTPUT -o $ext_if -p udp -m multiport --sports $incoming_udp -m state --state ESTABLISHED -j ACCEPT
+fi
 
 # allow outgoing TCP
-$iptables -A OUTPUT -o $ext_if -p tcp -m multiport --dports $outgoing_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-$iptables -A INPUT -i $ext_if -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
+if [ ! -z "$outgoing_tcp" ]; then
+	$iptables -A OUTPUT -o $ext_if -p tcp -m multiport --dports $outgoing_tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+	$iptables -A INPUT -i $ext_if -p tcp -m multiport --sports $outgoing_tcp -m state --state ESTABLISHED -j ACCEPT
+fi
 
 # allow outgoing UDP
-$iptables -A OUTPUT -o $ext_if -p udp -m multiport --dports $outgoing_udp -m state --state NEW,ESTABLISHED -j ACCEPT
-$iptables -A INPUT -i $ext_if -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
+if [ ! -z "$outgoing_udp" ]; then
+	$iptables -A OUTPUT -o $ext_if -p udp -m multiport --dports $outgoing_udp -m state --state NEW,ESTABLISHED -j ACCEPT
+	$iptables -A INPUT -i $ext_if -p udp -m multiport --sports $outgoing_udp -m state --state ESTABLISHED -j ACCEPT
+fi
 
 # make sure to drop bad packages
 $iptables -A INPUT -f -j DROP # Drop packages with incoming fragments
