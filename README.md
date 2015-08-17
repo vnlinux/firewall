@@ -3,6 +3,9 @@ firewall
 
 Tool for setting up your firewall based on iptables
 
+##Setup
+- install ipset package
+
 ##Files
 - firewall.sh: main script, need to run
 - blacklist.txt: list of bad ips will be blocked (one ip/network per line)
